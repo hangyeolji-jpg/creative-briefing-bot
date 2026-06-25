@@ -2,9 +2,8 @@ name: 주간 크리에이티브 인사이트 브리핑
 
 on:
   schedule:
-    # 매주 월요일 오전 9시 (KST = UTC+9, 그래서 UTC 00:00)
     - cron: '0 0 * * 1'
-  workflow_dispatch:  # 수동 실행도 가능
+  workflow_dispatch:
 
 jobs:
   briefing:
@@ -12,15 +11,15 @@ jobs:
 
     steps:
       - name: 코드 체크아웃
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Python 세팅
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: 패키지 설치
-        run: pip install requests beautifulsoup4 google-generativeai
+        run: pip install requests beautifulsoup4 google-genai
 
       - name: 브리핑 봇 실행
         env:
