@@ -5,7 +5,7 @@
 
 import requests
 from bs4 import BeautifulSoup
-import google.generativeai as genai
+from google import genai
 from datetime import datetime, timedelta
 import os
 
@@ -47,7 +47,6 @@ def crawl_ditoday():
     try:
         res = requests.get("https://www.ditoday.com/articles/category/marketing", timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        # 기사 제목과 요약 추출
         articles = soup.find_all(["h2", "h3", "p"], limit=30)
         text = "\n".join([a.get_text(strip=True) for a in articles if a.get_text(strip=True)])
         return text[:3000]
@@ -59,8 +58,7 @@ def crawl_ditoday():
 
 def analyze_with_gemini(raw_texts: dict) -> str:
     """수집된 텍스트를 Gemini로 분석해서 인사이트 요약"""
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     combined = ""
     for source, text in raw_texts.items():
@@ -84,7 +82,10 @@ def analyze_with_gemini(raw_texts: dict) -> str:
 한국어로 작성해주세요.
 """
 
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt
+    )
     return response.text
 
 
