@@ -1,3 +1,5 @@
+import pytest
+
 import briefing.main as main
 from briefing.models import Ad
 
@@ -20,6 +22,13 @@ def test_run_happy_path(monkeypatch):
     text = str(sent["payload"])
     assert "요약" in text
     assert "A" in text
+
+
+def test_run_exits_when_env_vars_missing(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("SLACK_WEBHOOK_URL", raising=False)
+    with pytest.raises(SystemExit):
+        main.run()
 
 
 def test_run_continues_when_scrape_fails(monkeypatch):

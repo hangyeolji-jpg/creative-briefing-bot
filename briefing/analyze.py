@@ -46,12 +46,18 @@ def build_prompt(ads: list[Ad]) -> str:
 def analyze(ads: list[Ad], api_key: str) -> str:
     """Claude로 인사이트 브리핑 생성. web_search 도구 허용."""
     client = anthropic.Anthropic(api_key=api_key)
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=4096,
-        tools=[{"type": WEB_SEARCH_TOOL_TYPE, "name": "web_search"}],
-        messages=[{"role": "user", "content": build_prompt(ads)}],
-    )
+    messages = [{"role": "user", "content": build_prompt(ads)}]
+    response = None
+    for _ in range(5):  # bound resume iterations
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=4096,
+            tools=[{"type": WEB_SEARCH_TOOL_TYPE, "name": "web_search", "max_uses": 5}],
+            messages=messages,
+        )
+        if response.stop_reason != "pause_turn":
+            break
+        messages.append({"role": "assistant", "content": response.content})
     # 서버 도구(web_search) 사용 시 text 블록만 이어붙임
     parts = [b.text for b in response.content if b.type == "text"]
     return "\n".join(p for p in parts if p).strip()
