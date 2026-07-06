@@ -1,0 +1,23 @@
+{
+  "data": {
+    "materials": [
+      {
+        "brand_name": "브랜드A",
+        "industry_label": "뷰티",
+        "like": 1234,
+        "ctr": 0.031,
+        "video_url": "https://v/1",
+        "ad_title": "여름 세일 지금",
+        "id": "aaa111"
+      },
+      {
+        "brand_name": "브랜드B",
+        "industry_label": "패션",
+        "like": 980,
+        "ctr": null,
+        "ad_title": "가을 신상",
+        "id": "bbb222"
+      }
+    ]
+  }
+}
