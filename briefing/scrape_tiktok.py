@@ -71,8 +71,7 @@ def scrape_tiktok() -> list[Ad]:
             )
             page.wait_for_timeout(3000)  # 지연 후 XHR 완료 대기
             browser.close()
+            return parse_top_ads(captured, TIKTOK_TOP_N)
     except Exception as e:  # noqa: BLE001 - 부분 실패 허용
         print(f"[TikTok 스크래핑 실패: {e}]")
         return []
-
-    return parse_top_ads(captured, TIKTOK_TOP_N)
