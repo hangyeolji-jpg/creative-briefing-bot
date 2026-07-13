@@ -12,3 +12,4 @@ class Ad:
     format: str
     caption: str
     link: str
+    thumbnail: str | None = None

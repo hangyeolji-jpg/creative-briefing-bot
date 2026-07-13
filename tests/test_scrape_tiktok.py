@@ -62,3 +62,9 @@ def test_parse_without_industry_map_falls_back_to_raw_key():
     # 매핑이 없으면 원본 코드값을 그대로 둔다(정보 손실 방지)
     ads = parse_top_ads(_payload(), top_n=1)
     assert ads[0].industry == "label_23125000000"
+
+
+def test_parse_captures_thumbnail_from_video_info():
+    ads = parse_top_ads(_payload(), top_n=20, industry_map=_industry_map())
+    assert ads[0].thumbnail == "https://p16/cover1.jpg"  # video_info.cover
+    assert ads[1].thumbnail is None  # video_info 없음
