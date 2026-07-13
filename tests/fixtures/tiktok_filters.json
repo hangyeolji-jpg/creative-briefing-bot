@@ -1,0 +1,21 @@
+{
+  "data": {
+    "industry": [
+      {
+        "id": 23125000000,
+        "value": "뷰티",
+        "label": "label_23125000000",
+        "parent_id": 23000000000
+      },
+      {
+        "id": 23130000000,
+        "value": "패션",
+        "label": "label_23130000000",
+        "parent_id": 23000000000
+      }
+    ],
+    "period": [
+      {"id": 7, "value": "Last 7 days", "label": "seven_day"}
+    ]
+  }
+}

@@ -2,22 +2,34 @@
   "data": {
     "materials": [
       {
+        "id": "aaa111",
         "brand_name": "브랜드A",
-        "industry_label": "뷰티",
+        "industry_key": "label_23125000000",
         "like": 1234,
         "ctr": 0.031,
-        "video_url": "https://v/1",
         "ad_title": "여름 세일 지금",
-        "id": "aaa111"
+        "cost": 3,
+        "objective_key": "campaign_objective_conversion",
+        "video_info": {
+          "vid": "v1",
+          "duration": 30.5,
+          "cover": "https://p16/cover1.jpg"
+        }
       },
       {
+        "id": "bbb222",
         "brand_name": "브랜드B",
-        "industry_label": "패션",
+        "industry_key": "label_23130000000",
         "like": 980,
         "ctr": null,
-        "ad_title": "가을 신상",
-        "id": "bbb222"
+        "ad_title": "가을 신상"
       }
-    ]
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total_count": 2,
+      "has_more": false
+    }
   }
 }
