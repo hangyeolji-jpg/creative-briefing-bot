@@ -9,13 +9,18 @@ def _ad():
              format="video", caption="c", link="https://x/1")
 
 
-def test_run_happy_path(monkeypatch):
-    sent = {}
+def _env(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
     monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
+
+
+def test_run_happy_path(monkeypatch):
+    sent = {}
+    _env(monkeypatch)
     monkeypatch.setattr(main, "scrape_tiktok", lambda: [_ad()])
     monkeypatch.setattr(main, "analyze", lambda ads, api_key: "요약")
     monkeypatch.setattr(main, "send_to_slack", lambda payload, url: sent.update(payload=payload))
+    monkeypatch.setattr(main, "save_briefing", lambda *a, **k: None)
 
     main.run()
 
@@ -33,14 +38,45 @@ def test_run_exits_when_env_vars_missing(monkeypatch):
 
 def test_run_continues_when_scrape_fails(monkeypatch):
     sent = {}
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
-    monkeypatch.setattr(main, "scrape_tiktok", lambda: [])  # 수집 실패 → 빈 리스트
+    _env(monkeypatch)
+    monkeypatch.setattr(main, "scrape_tiktok", lambda: [])
     monkeypatch.setattr(main, "analyze", lambda ads, api_key: "웹서치 기반 요약")
     monkeypatch.setattr(main, "send_to_slack", lambda payload, url: sent.update(payload=payload))
+    monkeypatch.setattr(main, "save_briefing", lambda *a, **k: None)
 
     main.run()
 
     text = str(sent["payload"])
     assert "웹서치 기반 요약" in text
-    assert "수집" in text  # 경고 문구 포함
+    assert "수집" in text
+
+
+def test_run_saves_archive(monkeypatch):
+    calls = {}
+    _env(monkeypatch)
+    monkeypatch.setattr(main, "scrape_tiktok", lambda: [_ad()])
+    monkeypatch.setattr(main, "analyze", lambda ads, api_key: "요약")
+    monkeypatch.setattr(main, "send_to_slack", lambda payload, url: None)
+    monkeypatch.setattr(main, "save_briefing",
+                        lambda *a, **k: calls.update(saved=True, args=a))
+
+    main.run()
+
+    assert calls.get("saved") is True
+    # 위치 인자: date, brief, ads, warnings, data_dir
+    assert calls["args"][1] == "요약"
+    assert calls["args"][4] == "web/data"
+
+
+def test_run_archive_failure_is_non_fatal(monkeypatch):
+    _env(monkeypatch)
+    monkeypatch.setattr(main, "scrape_tiktok", lambda: [_ad()])
+    monkeypatch.setattr(main, "analyze", lambda ads, api_key: "요약")
+    monkeypatch.setattr(main, "send_to_slack", lambda payload, url: None)
+
+    def _boom(*a, **k):
+        raise IOError("disk full")
+
+    monkeypatch.setattr(main, "save_briefing", _boom)
+
+    main.run()  # 예외가 전파되면 안 됨 (테스트가 실패로 잡음)

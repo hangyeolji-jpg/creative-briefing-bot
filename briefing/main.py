@@ -1,9 +1,14 @@
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 
 from briefing.analyze import analyze
 from briefing.notify_slack import build_slack_message, send_to_slack
+from briefing.save_briefing import save_briefing
 from briefing.scrape_tiktok import scrape_tiktok
+
+_KST = timezone(timedelta(hours=9))
+_DATA_DIR = "web/data"
 
 
 def run() -> None:
@@ -26,5 +31,12 @@ def run() -> None:
     print("📨 Slack 발송 중...")
     payload = build_slack_message(brief, ads, warnings)
     send_to_slack(payload, webhook_url)  # 실패 시 RuntimeError → 비정상 종료
+
+    date = datetime.now(_KST).strftime("%Y-%m-%d")
+    try:
+        save_briefing(date, brief, ads, warnings, _DATA_DIR)
+        print("🗄️ 아카이브 저장 완료")
+    except Exception as e:  # noqa: BLE001 - 아카이브 실패는 비치명적
+        print(f"[아카이브 저장 실패(비치명적): {e}]")
 
     print("✅ 완료!")
