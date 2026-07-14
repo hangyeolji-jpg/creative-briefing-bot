@@ -39,22 +39,35 @@ function miniMarkdown(md) {
   return out.join("");
 }
 
-function adCard(ad) {
+// 0~1 범위의 CTR을 막대 너비(%)로. 값이 없으면 막대를 그리지 않는다.
+function ctrMeter(ctr) {
+  if (ctr == null) return "";
+  const pct = Math.max(0, Math.min(100, Number(ctr) * 100));
+  return `<div class="meter"><span style="width:${pct.toFixed(1)}%"></span></div>`;
+}
+
+// index는 TikTok Top Ads의 인기 순위 — 카드 순서 자체가 정보라 번호로 드러낸다.
+function adCard(ad, i) {
   const thumb = ad.thumbnail
     ? `<img class="ad-thumb" src="data/${esc(ad.thumbnail)}" alt="" loading="lazy">`
     : `<div class="ad-thumb ad-thumb--empty">${ad.format === "video" ? "▶" : "🖼"}</div>`;
+  const industry = ad.industry
+    ? `<span class="ad-industry">${esc(ad.industry)}</span>`
+    : "";
   return `
     <a class="ad-card" href="${esc(ad.link)}" target="_blank" rel="noopener">
+      <span class="ad-rank">${i + 1}</span>
       ${thumb}
       <div class="ad-body">
-        <div class="ad-top">
-          <span class="ad-advertiser">${esc(ad.advertiser) || "(광고주 미상)"}</span>
-          <span class="ad-industry">${esc(ad.industry)}</span>
-        </div>
+        <span class="ad-advertiser">${esc(ad.advertiser) || "(광고주 미상)"}</span>
+        ${industry}
         <p class="ad-caption">${esc(ad.caption)}</p>
         <div class="ad-metrics">
-          <span>♥ ${fmtNum(ad.likes)}</span>
-          <span>CTR ${fmtPct(ad.ctr)}</span>
+          <div class="metric-row">
+            <span>♥ ${fmtNum(ad.likes)}</span>
+            <span class="metric-ctr">${fmtPct(ad.ctr)}</span>
+          </div>
+          ${ctrMeter(ad.ctr)}
         </div>
       </div>
     </a>`;
@@ -66,16 +79,25 @@ async function showBriefing(date) {
     a.classList.toggle("active", a.dataset.date === date));
   try {
     const b = await loadJSON(`data/briefings/${date}.json`);
-    const cards = (b.ads || []).map(adCard).join("");
+    const ads = b.ads || [];
+    const cards = ads.map(adCard).join("");
     const warn = (b.warnings || []).length
       ? `<div class="warnings">${b.warnings.map((w) => `⚠️ ${esc(w)}`).join("<br>")}</div>`
       : "";
+    const adsSection = ads.length
+      ? `<h3 class="ads-heading">인기 광고 <span class="detail-meta">${ads.length}건</span></h3>
+         <p class="ads-note">TikTok Creative Center 인기순. 카드를 누르면 원본으로 이동합니다.</p>
+         <div class="ad-grid">${cards}</div>`
+      : `<h3 class="ads-heading">인기 광고</h3>
+         <p class="ads-note">이번 주에는 수집된 광고가 없습니다.</p>`;
     detailEl.innerHTML = `
-      <h2 class="detail-date">${esc(b.date)}</h2>
+      <div class="detail-head">
+        <h2 class="detail-date">${esc(b.date)}</h2>
+        <span class="detail-meta">광고 ${ads.length}건</span>
+      </div>
       ${warn}
       <div class="brief-text">${miniMarkdown(b.brief)}</div>
-      <h3 class="ads-heading">이번 주 인기 광고</h3>
-      <div class="ad-grid">${cards || '<p class="muted">수집된 광고가 없습니다.</p>'}</div>`;
+      ${adsSection}`;
   } catch (e) {
     detailEl.innerHTML = `<p class="muted">이 브리핑을 불러오지 못했습니다 (${esc(e.message)}).</p>`;
   }
