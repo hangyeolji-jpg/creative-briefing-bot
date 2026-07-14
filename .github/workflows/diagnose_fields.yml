@@ -1,0 +1,57 @@
+name: (임시) TikTok 응답 필드 덤프
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: 원본 응답 필드 확인
+        run: |
+          python - <<'PY'
+          import json
+          from playwright.sync_api import sync_playwright
+          from briefing.config import TIKTOK_TOP_ADS_URL, TIKTOK_REGION
+
+          captured = {}
+          with sync_playwright() as p:
+              b = p.chromium.launch(headless=True)
+              pg = b.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36")
+              pg.on("response", lambda r: captured.update(r.json()) if "top_ads/v2/list" in r.url else None)
+              pg.goto(f"{TIKTOK_TOP_ADS_URL}?region={TIKTOK_REGION}", wait_until="networkidle", timeout=60000)
+              pg.wait_for_timeout(3000)
+              b.close()
+
+          mats = captured.get("data", {}).get("materials", [])
+          print(f"=== materials {len(mats)}건 ===")
+          if not mats:
+              print("수집 실패"); raise SystemExit(1)
+
+          m = mats[0]
+          print("\n=== 1번 광고의 모든 최상위 필드 ===")
+          for k, v in m.items():
+              if isinstance(v, (dict, list)):
+                  print(f"  {k}: <{type(v).__name__}> {json.dumps(v, ensure_ascii=False)[:160]}")
+              else:
+                  print(f"  {k}: {v!r}")
+
+          print("\n=== 모든 광고에 공통으로 존재하는 필드 ===")
+          common = set(mats[0])
+          for x in mats:
+              common &= set(x)
+          print(" ", sorted(common))
+
+          print("\n=== 각 필드의 값 샘플 (상위 3건) ===")
+          for k in sorted(common):
+              vals = [x.get(k) for x in mats[:3]]
+              print(f"  {k}: {json.dumps(vals, ensure_ascii=False)[:130]}")
+          PY

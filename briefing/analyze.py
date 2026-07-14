@@ -1,3 +1,4 @@
+import statistics
 import time
 
 from briefing.config import BASE_DELAY_SEC, MAX_RETRIES, MODEL, USE_GOOGLE_SEARCH
@@ -32,8 +33,49 @@ def _format_ads(ads: list[Ad]) -> str:
     return "\n".join(rows)
 
 
+def summarize_metrics(ads: list[Ad]) -> str:
+    """집계 수치를 미리 계산해 프롬프트에 넣는다.
+
+    모델이 20건을 눈대중으로 훑어 '대부분 CTR 70~97%' 같은 잘못된 일반화를
+    하는 것을 막는다(실제 범위는 9~97%였다). 계산은 코드가, 해석은 모델이.
+    """
+    if not ads:
+        return ""
+
+    lines = [f"- 광고 수: {len(ads)}건"]
+
+    ctrs = [a.ctr for a in ads if a.ctr is not None]
+    if ctrs:
+        lines.append(
+            f"- CTR: 최저 {min(ctrs):.1%} / 중앙값 {statistics.median(ctrs):.1%} "
+            f"/ 최고 {max(ctrs):.1%}"
+        )
+
+    likes = [a.likes for a in ads if a.likes is not None]
+    if likes:
+        lines.append(
+            f"- 좋아요: 최저 {min(likes):,} / 중앙값 {statistics.median(likes):,.0f} "
+            f"/ 최고 {max(likes):,}"
+        )
+
+    formats: dict[str, int] = {}
+    for a in ads:
+        formats[a.format] = formats.get(a.format, 0) + 1
+    lines.append(
+        "- 포맷 구성: " + ", ".join(f"{k} {v}건" for k, v in sorted(formats.items()))
+    )
+
+    return "\n".join(lines)
+
+
 def build_prompt(ads: list[Ad]) -> str:
     ad_block = _format_ads(ads)
+    stats = summarize_metrics(ads)
+    stats_block = (
+        f"\n[집계 수치 — 코드가 계산한 값이므로 수치 인용 시 반드시 이것을 쓸 것]\n{stats}\n"
+        if stats
+        else ""
+    )
     search_line = (
         "필요하면 Google 검색으로 이번 주 광고 트렌드 기사를 추가로 찾아 보완하세요."
         if USE_GOOGLE_SEARCH
@@ -45,6 +87,8 @@ def build_prompt(ads: list[Ad]) -> str:
 
 [수집 데이터]
 {ad_block}
+{stats_block}
+목록은 인기순입니다. 순위가 높다고 CTR이 높은 것은 아니니 둘을 뒤섞지 마세요.
 
 위 내용을 바탕으로 아래 형식으로 이번 주 크리에이티브 인사이트를 정리하세요.
 
@@ -53,6 +97,11 @@ def build_prompt(ads: list[Ad]) -> str:
 2. 주목할 후킹/카피 패턴 (2~3가지, 예시 포함)
 3. 포맷 트렌드 (어떤 포맷이 뜨고 있는지)
 4. 우리 소재 기획에 적용할 수 있는 포인트 (1~2가지)
+
+수치 인용 규칙(엄수):
+- CTR·좋아요 같은 수치를 언급할 때는 위 [집계 수치]의 값만 쓰세요.
+- 상위 몇 건을 보고 "대부분 ~%대" 같이 전체로 일반화하지 마세요.
+- 특정 광고를 예로 들 때는 그 광고의 수치임을 명시하세요.
 
 수집된 데이터/검색 결과에 없는 내용은 억측하지 말고 근거 기반으로만 작성하세요.
 한국어로, Slack에서 읽기 좋게 간결하게 작성하세요."""
