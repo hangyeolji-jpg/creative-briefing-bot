@@ -12,6 +12,26 @@ def _ad():
 def _env(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
     monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
+    monkeypatch.delenv("DRY_RUN", raising=False)
+
+
+def test_dry_run_skips_slack_and_archive(monkeypatch, capsys):
+    _env(monkeypatch)
+    monkeypatch.setenv("DRY_RUN", "true")
+    monkeypatch.setattr(main, "scrape_tiktok", lambda: [_ad()])
+    monkeypatch.setattr(main, "analyze", lambda ads, api_key: "요약본문")
+
+    def _must_not_call(*a, **k):
+        raise AssertionError("dry-run에서 호출되면 안 됨")
+
+    monkeypatch.setattr(main, "send_to_slack", _must_not_call)
+    monkeypatch.setattr(main, "save_briefing", _must_not_call)
+
+    main.run()  # 부수효과 함수가 불리면 AssertionError로 실패
+
+    out = capsys.readouterr().out
+    assert "DRY_RUN" in out
+    assert "요약본문" in out  # 브리핑 내용은 로그로 확인 가능해야 함
 
 
 def test_run_happy_path(monkeypatch):

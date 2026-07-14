@@ -11,12 +11,18 @@ _KST = timezone(timedelta(hours=9))
 _DATA_DIR = "web/data"
 
 
+def _is_dry_run() -> bool:
+    return os.environ.get("DRY_RUN", "").strip().lower() in ("1", "true", "yes")
+
+
 def run() -> None:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
     if not api_key or not webhook_url:
         print("❌ ANTHROPIC_API_KEY / SLACK_WEBHOOK_URL 환경변수 필요")
         sys.exit(1)
+
+    dry_run = _is_dry_run()
 
     warnings: list[str] = []
 
@@ -28,8 +34,22 @@ def run() -> None:
     print("🤖 Claude 분석 중...")
     brief = analyze(ads, api_key)  # 실패 시 예외 → 비정상 종료
 
-    print("📨 Slack 발송 중...")
     payload = build_slack_message(brief, ads, warnings)
+
+    # dry-run: API 키·스크래핑·분석까지 실제로 검증하되, 팀 채널 발송과
+    # 아카이브 커밋 같은 되돌리기 어려운 부수효과는 건너뛴다.
+    if dry_run:
+        print("🧪 DRY_RUN — Slack 발송/아카이브 저장 건너뜀\n")
+        print("=" * 60)
+        print(brief)
+        print("=" * 60)
+        for w in warnings:
+            print(f"⚠️ {w}")
+        print(f"\n수집된 광고: {len(ads)}건")
+        print("✅ dry-run 완료!")
+        return
+
+    print("📨 Slack 발송 중...")
     send_to_slack(payload, webhook_url)  # 실패 시 RuntimeError → 비정상 종료
 
     date = datetime.now(_KST).strftime("%Y-%m-%d")
