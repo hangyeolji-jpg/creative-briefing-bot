@@ -13,6 +13,25 @@ def _env(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "k")
     monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
     monkeypatch.delenv("DRY_RUN", raising=False)
+    monkeypatch.delenv("SKIP_SLACK", raising=False)
+
+
+def test_skip_slack_still_saves_archive(monkeypatch):
+    calls = {}
+    _env(monkeypatch)
+    monkeypatch.setenv("SKIP_SLACK", "true")
+    monkeypatch.setattr(main, "scrape_tiktok", lambda: [_ad()])
+    monkeypatch.setattr(main, "analyze", lambda ads, api_key: "요약")
+
+    def _must_not_send(*a, **k):
+        raise AssertionError("SKIP_SLACK인데 발송되면 안 됨")
+
+    monkeypatch.setattr(main, "send_to_slack", _must_not_send)
+    monkeypatch.setattr(main, "save_briefing", lambda *a, **k: calls.update(saved=True))
+
+    main.run()
+
+    assert calls.get("saved") is True  # 아카이브는 저장돼야 함
 
 
 def test_dry_run_skips_slack_and_archive(monkeypatch, capsys):

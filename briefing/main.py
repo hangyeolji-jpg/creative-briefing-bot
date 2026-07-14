@@ -11,8 +11,8 @@ _KST = timezone(timedelta(hours=9))
 _DATA_DIR = "web/data"
 
 
-def _is_dry_run() -> bool:
-    return os.environ.get("DRY_RUN", "").strip().lower() in ("1", "true", "yes")
+def _flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes")
 
 
 def run() -> None:
@@ -22,7 +22,8 @@ def run() -> None:
         print("❌ GEMINI_API_KEY / SLACK_WEBHOOK_URL 환경변수 필요")
         sys.exit(1)
 
-    dry_run = _is_dry_run()
+    dry_run = _flag("DRY_RUN")
+    skip_slack = _flag("SKIP_SLACK")  # 아카이브만 채우고 팀 채널은 건드리지 않을 때
 
     warnings: list[str] = []
 
@@ -49,8 +50,11 @@ def run() -> None:
         print("✅ dry-run 완료!")
         return
 
-    print("📨 Slack 발송 중...")
-    send_to_slack(payload, webhook_url)  # 실패 시 RuntimeError → 비정상 종료
+    if skip_slack:
+        print("⏭️ SKIP_SLACK — 발송 생략, 아카이브만 저장")
+    else:
+        print("📨 Slack 발송 중...")
+        send_to_slack(payload, webhook_url)  # 실패 시 RuntimeError → 비정상 종료
 
     date = datetime.now(_KST).strftime("%Y-%m-%d")
     try:

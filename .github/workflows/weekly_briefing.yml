@@ -9,6 +9,10 @@ on:
         description: 'Slack 발송/아카이브 커밋 없이 브리핑만 생성해 로그로 확인'
         type: boolean
         default: false
+      skip_slack:
+        description: 'Slack 발송만 건너뛰고 아카이브는 저장·커밋 (웹 대시보드 채우기용)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -36,6 +40,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DRY_RUN: ${{ inputs.dry_run }}
+          SKIP_SLACK: ${{ inputs.skip_slack }}
         run: python creative_briefing_bot.py
 
       - name: 아카이브 커밋 & 푸시
