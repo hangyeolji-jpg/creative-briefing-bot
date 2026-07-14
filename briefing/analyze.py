@@ -1,6 +1,6 @@
 import time
 
-from briefing.config import BASE_DELAY_SEC, MAX_RETRIES, MODEL
+from briefing.config import BASE_DELAY_SEC, MAX_RETRIES, MODEL, USE_GOOGLE_SEARCH
 from briefing.models import Ad
 
 # 재시도할 상태코드: 429(quota/rate limit) + 일시적 서버 오류
@@ -10,10 +10,16 @@ _RETRYABLE_TEXT = ("resource_exhausted", "rate limit", "quota", "unavailable", "
 
 def _format_ads(ads: list[Ad]) -> str:
     if not ads:
+        if USE_GOOGLE_SEARCH:
+            return (
+                "이번 주 TikTok Top Ads 자동 수집 데이터가 없습니다. "
+                "웹 검색으로 '이번 주 인기 광고 / 크리에이티브 트렌드'를 "
+                "직접 검색해 트렌드를 파악하세요."
+            )
         return (
             "이번 주 TikTok Top Ads 자동 수집 데이터가 없습니다. "
-            "웹 검색으로 '이번 주 인기 광고 / 크리에이티브 트렌드'를 "
-            "직접 검색해 트렌드를 파악하세요."
+            "웹 검색도 사용할 수 없으니, 확실히 알고 있는 최신 크리에이티브 "
+            "트렌드 지식만으로 작성하고 근거가 약한 내용은 단정하지 마세요."
         )
     rows = []
     for i, ad in enumerate(ads, 1):
@@ -28,9 +34,14 @@ def _format_ads(ads: list[Ad]) -> str:
 
 def build_prompt(ads: list[Ad]) -> str:
     ad_block = _format_ads(ads)
+    search_line = (
+        "필요하면 Google 검색으로 이번 주 광고 트렌드 기사를 추가로 찾아 보완하세요."
+        if USE_GOOGLE_SEARCH
+        else "웹 검색 도구는 사용할 수 없습니다. 아래 수집 데이터를 근거로 작성하세요."
+    )
     return f"""당신은 퍼포먼스 마케터를 위한 크리에이티브 인사이트 분석가입니다.
 아래는 이번 주 TikTok Creative Center의 인기 광고(Top Ads) 수집 데이터입니다.
-필요하면 Google 검색으로 이번 주 광고 트렌드 기사를 추가로 찾아 보완하세요.
+{search_line}
 
 [수집 데이터]
 {ad_block}
@@ -69,12 +80,16 @@ def _build_client(api_key: str):
 def _generate(client, prompt: str) -> str:
     from google.genai import types
 
+    config = None
+    if USE_GOOGLE_SEARCH:
+        config = types.GenerateContentConfig(
+            tools=[types.Tool(google_search=types.GoogleSearch())],
+        )
+
     response = client.models.generate_content(
         model=MODEL,
         contents=prompt,
-        config=types.GenerateContentConfig(
-            tools=[types.Tool(google_search=types.GoogleSearch())],
-        ),
+        config=config,
     )
     return (response.text or "").strip()
 
