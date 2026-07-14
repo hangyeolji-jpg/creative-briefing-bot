@@ -4,8 +4,16 @@ export const config = { matcher: "/((?!favicon.ico).*)" };
 
 export default function middleware(request) {
   const expected = process.env.SITE_PASSWORD || "";
-  // 비번 미설정 시 잠그지 않음(로컬/미설정 환경 편의). 운영에선 반드시 설정.
-  if (!expected) return;
+
+  // 비번 미설정이면 열어주는 게 아니라 잠근다(fail-closed). 환경변수 오타 하나로
+  // 비공개 아카이브가 아무 신호 없이 공개되는 쪽이 훨씬 위험하다.
+  // (로컬은 python -m http.server 로 띄우므로 이 미들웨어 자체가 실행되지 않는다.)
+  if (!expected) {
+    return new Response(
+      "SITE_PASSWORD 환경변수가 설정되지 않아 사이트가 잠겨 있습니다. Vercel 프로젝트 설정에서 추가하세요.",
+      { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    );
+  }
 
   const header = request.headers.get("authorization") || "";
   if (header.startsWith("Basic ")) {
@@ -19,6 +27,9 @@ export default function middleware(request) {
   }
   return new Response("인증이 필요합니다.", {
     status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="briefing-archive"' },
+    headers: {
+      "WWW-Authenticate": 'Basic realm="briefing-archive"',
+      "Content-Type": "text/plain; charset=utf-8",
+    },
   });
 }

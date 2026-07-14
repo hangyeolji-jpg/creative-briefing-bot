@@ -68,3 +68,39 @@ def test_index_upsert_and_sorts_desc(tmp_path):
     dates = [b["date"] for b in index["briefings"]]
     assert dates == ["2026-07-13", "2026-07-06"]  # 최신순, 중복 없음
     assert index["briefings"][0]["headline"] == "newer-v2"
+
+
+def test_corrupt_index_is_rebuilt_not_fatal(tmp_path):
+    save_briefing("2026-07-06", "older", _ads(), [], tmp_path,
+                  generated_at="t", fetch=lambda u, d: False)
+    # index.json 손상(이전 실행이 쓰다 죽은 상황)
+    (tmp_path / "index.json").write_text("{ broken", encoding="utf-8")
+
+    save_briefing("2026-07-13", "newer", _ads(), [], tmp_path,
+                  generated_at="t", fetch=lambda u, d: False)
+
+    index = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
+    dates = [b["date"] for b in index["briefings"]]
+    # 예외 없이 복구되고, 손상 전 브리핑도 상세 JSON에서 되살아난다
+    assert dates == ["2026-07-13", "2026-07-06"]
+
+
+def test_stale_thumbnails_removed_on_resave(tmp_path):
+    save_briefing("2026-07-13", "b", _ads(), [], tmp_path,
+                  generated_at="t", fetch=_ok_fetch([]))
+    stale = tmp_path / "thumbs" / "2026-07-13" / "07.jpg"
+    stale.write_bytes(b"old")  # 이전 실행이 남긴 고아 썸네일
+
+    save_briefing("2026-07-13", "b", _ads(), [], tmp_path,
+                  generated_at="t", fetch=_ok_fetch([]))
+
+    assert not stale.exists()
+    assert (tmp_path / "thumbs" / "2026-07-13" / "00.jpg").exists()
+
+
+def test_headline_keeps_leading_hyphen_in_heading(tmp_path):
+    save_briefing("2026-07-13", "# -50% 할인 소구가 강세", _ads(), [], tmp_path,
+                  generated_at="t", fetch=lambda u, d: False)
+    index = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
+    # 마크다운 접두사만 제거 — 본문의 '-'는 살아남아야 한다
+    assert index["briefings"][0]["headline"] == "-50% 할인 소구가 강세"

@@ -9,19 +9,34 @@ async function loadJSON(path) {
 
 function fmtPct(v) { return v == null ? "–" : `${Math.round(v * 100)}%`; }
 function fmtNum(v) { return v == null ? "–" : v.toLocaleString(); }
+// 따옴표까지 escape — 결과값이 href="..." 같은 속성 컨텍스트에 들어가므로
+// " 를 남겨두면 속성을 탈출해 이벤트 핸들러를 주입할 수 있다.
 function esc(s) {
   return String(s == null ? "" : s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 // 아주 간단한 마크다운 → HTML (제목/굵게/문단만). 입력은 먼저 이스케이프.
+// 제목은 줄 단위로 판정한다 — 블록 첫 줄만 보면 빈 줄 없이 이어진 제목이
+// <p> 안에 중첩돼 잘못된 HTML이 된다.
 function miniMarkdown(md) {
-  return esc(md)
-    .replace(/^#{1,6}\s?(.*)$/gm, "<h3>$1</h3>")
+  const lines = esc(md)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .split(/\n{2,}/)
-    .map((block) => (block.startsWith("<h3>") ? block : `<p>${block.replace(/\n/g, "<br>")}</p>`))
-    .join("");
+    .split("\n");
+  const out = [];
+  let para = [];
+  const flush = () => {
+    if (para.length) { out.push(`<p>${para.join("<br>")}</p>`); para = []; }
+  };
+  for (const line of lines) {
+    const heading = line.match(/^#{1,6}\s?(.*)$/);
+    if (heading) { flush(); out.push(`<h3>${heading[1]}</h3>`); }
+    else if (!line.trim()) flush();
+    else para.push(line);
+  }
+  flush();
+  return out.join("");
 }
 
 function adCard(ad) {
@@ -81,9 +96,19 @@ async function init() {
         <span class="li-headline">${esc(b.headline)}</span>
         <span class="li-count">${esc(b.ad_count)}개</span>
       </a>`).join("");
-    listEl.querySelectorAll("a").forEach((a) =>
-      a.addEventListener("click", (ev) => { ev.preventDefault(); showBriefing(a.dataset.date); }));
-    showBriefing(location.hash.slice(1) || briefings[0].date);
+
+    // 링크의 기본 동작(해시 변경)을 그대로 두고 hashchange로 라우팅한다 —
+    // preventDefault로 막으면 URL이 선택을 반영하지 않아 새로고침/공유가 깨진다.
+    const known = new Set(briefings.map((b) => b.date));
+    const fromHash = () => {
+      const date = decodeURIComponent(location.hash.slice(1));
+      return known.has(date) ? date : null;
+    };
+    window.addEventListener("hashchange", () => {
+      const date = fromHash();
+      if (date) showBriefing(date);
+    });
+    showBriefing(fromHash() || briefings[0].date);
   } catch (e) {
     detailEl.innerHTML = `<p class="muted">아카이브를 불러오지 못했습니다 (${esc(e.message)}).</p>`;
   }

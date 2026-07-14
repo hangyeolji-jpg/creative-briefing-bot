@@ -39,7 +39,16 @@ jobs:
           git add web/data
           if git diff --cached --quiet; then
             echo "변경 없음 — skip"
-          else
-            git commit -m "chore: archive $(date -u +%F) briefing"
-            git push
+            exit 0
           fi
+          git commit -m "chore: archive $(date -u +%F) briefing"
+          # 실행 중(수 분) 사이에 다른 커밋이 들어오면 push가 거부된다 → rebase 후 재시도
+          for attempt in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "push 거부됨 — rebase 후 재시도 ($attempt/3)"
+            git pull --rebase
+          done
+          echo "3회 시도 후에도 push 실패"
+          exit 1
