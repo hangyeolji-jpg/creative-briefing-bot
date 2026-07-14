@@ -2,7 +2,7 @@ import os
 
 # Gemini 모델. 구버전은 신규 사용자에게 404가 나므로(2.5-flash가 그랬다)
 # 모델이 또 바뀌면 코드 수정 없이 GEMINI_MODEL 환경변수로 덮어쓴다.
-MODEL = os.environ.get("GEMINI_MODEL") or "gemini-3.5-flash"
+MODEL = os.environ.get("GEMINI_MODEL") or "gemini-3.1-flash-lite"
 
 # 429/5xx 재시도 — v1이 quota(429)에서 그냥 죽던 것이 v2의 발단이었다.
 MAX_RETRIES = 5
