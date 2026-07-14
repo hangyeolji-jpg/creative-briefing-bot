@@ -45,15 +45,17 @@ def parse_top_ads(payload: dict, top_n: int, industry_map: dict | None = None) -
     for m in materials[:top_n]:
         ad_id = str(m.get("id", ""))
         industry_key = m.get("industry_key") or ""
+        video_info = m.get("video_info") or {}
         ads.append(
             Ad(
                 advertiser=m.get("brand_name") or "",
                 industry=industry_map.get(industry_key, industry_key),
                 likes=m.get("like"),
                 ctr=m.get("ctr"),
-                format="video" if m.get("video_info") else "image",
+                format="video" if video_info else "image",
                 caption=m.get("ad_title") or "",
                 link=_detail_link(ad_id),
+                thumbnail=(video_info.get("cover") if isinstance(video_info, dict) else None),
             )
         )
     return ads
