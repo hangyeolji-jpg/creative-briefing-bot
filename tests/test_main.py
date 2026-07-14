@@ -10,7 +10,7 @@ def _ad():
 
 
 def _env(monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
     monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hook")
     monkeypatch.delenv("DRY_RUN", raising=False)
 
@@ -50,7 +50,7 @@ def test_run_happy_path(monkeypatch):
 
 
 def test_run_exits_when_env_vars_missing(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("SLACK_WEBHOOK_URL", raising=False)
     with pytest.raises(SystemExit):
         main.run()

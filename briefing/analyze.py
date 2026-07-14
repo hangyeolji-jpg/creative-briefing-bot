@@ -1,7 +1,11 @@
-import anthropic
+import time
 
-from briefing.config import MODEL, WEB_SEARCH_TOOL_TYPE
+from briefing.config import BASE_DELAY_SEC, MAX_RETRIES, MODEL
 from briefing.models import Ad
+
+# 재시도할 상태코드: 429(quota/rate limit) + 일시적 서버 오류
+_RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+_RETRYABLE_TEXT = ("resource_exhausted", "rate limit", "quota", "unavailable", "overloaded")
 
 
 def _format_ads(ads: list[Ad]) -> str:
@@ -26,7 +30,7 @@ def build_prompt(ads: list[Ad]) -> str:
     ad_block = _format_ads(ads)
     return f"""당신은 퍼포먼스 마케터를 위한 크리에이티브 인사이트 분석가입니다.
 아래는 이번 주 TikTok Creative Center의 인기 광고(Top Ads) 수집 데이터입니다.
-필요하면 web_search 도구로 이번 주 광고 트렌드 기사를 추가로 찾아 보완하세요.
+필요하면 Google 검색으로 이번 주 광고 트렌드 기사를 추가로 찾아 보완하세요.
 
 [수집 데이터]
 {ad_block}
@@ -43,21 +47,62 @@ def build_prompt(ads: list[Ad]) -> str:
 한국어로, Slack에서 읽기 좋게 간결하게 작성하세요."""
 
 
-def analyze(ads: list[Ad], api_key: str) -> str:
-    """Claude로 인사이트 브리핑 생성. web_search 도구 허용."""
-    client = anthropic.Anthropic(api_key=api_key)
-    messages = [{"role": "user", "content": build_prompt(ads)}]
-    response = None
-    for _ in range(5):  # bound resume iterations
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=4096,
-            tools=[{"type": WEB_SEARCH_TOOL_TYPE, "name": "web_search", "max_uses": 5}],
-            messages=messages,
-        )
-        if response.stop_reason != "pause_turn":
-            break
-        messages.append({"role": "assistant", "content": response.content})
-    # 서버 도구(web_search) 사용 시 text 블록만 이어붙임
-    parts = [b.text for b in response.content if b.type == "text"]
-    return "\n".join(p for p in parts if p).strip()
+def is_retryable(exc: Exception) -> bool:
+    """quota/rate-limit/일시적 서버 오류인지 판정.
+
+    SDK 예외 계층에 기대지 않고 상태코드와 메시지로 본다 — google-genai의
+    예외 타입이 버전마다 달라 타입만 보면 조용히 재시도를 놓친다.
+    """
+    code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
+    if isinstance(code, int) and code in _RETRYABLE_STATUS:
+        return True
+    text = str(exc).lower()
+    return any(t in text for t in _RETRYABLE_TEXT)
+
+
+def _build_client(api_key: str):
+    from google import genai
+
+    return genai.Client(api_key=api_key)
+
+
+def _generate(client, prompt: str) -> str:
+    from google.genai import types
+
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            tools=[types.Tool(google_search=types.GoogleSearch())],
+        ),
+    )
+    return (response.text or "").strip()
+
+
+def analyze(ads: list[Ad], api_key: str, *, client=None, sleep=time.sleep) -> str:
+    """Gemini로 인사이트 브리핑 생성. Google 검색 grounding 사용.
+
+    429(quota)에서 지수 백오프로 재시도한다 — 재시도 없이 죽던 것이 v1의 문제였다.
+    """
+    client = client or _build_client(api_key)
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            brief = _generate(client, build_prompt(ads))
+        except Exception as exc:
+            last = attempt == MAX_RETRIES - 1
+            if last or not is_retryable(exc):
+                raise
+            delay = BASE_DELAY_SEC * (2**attempt)
+            print(f"[Gemini 일시 오류 — {delay}초 후 재시도 {attempt + 1}/{MAX_RETRIES}: {exc}]")
+            sleep(delay)
+            continue
+
+        if brief:
+            return brief
+        # 빈 응답도 일시적일 수 있어 재시도하되, 끝까지 비면 실패로 본다.
+        if attempt == MAX_RETRIES - 1:
+            raise RuntimeError("Gemini가 빈 브리핑을 반환했습니다")
+        sleep(BASE_DELAY_SEC * (2**attempt))
+
+    raise RuntimeError("Gemini 분석 실패 (재시도 소진)")

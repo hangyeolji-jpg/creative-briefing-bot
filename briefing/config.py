@@ -1,8 +1,9 @@
-# Claude 모델 (정확히 이 문자열 사용, 날짜 접미사 금지)
-MODEL = "claude-opus-4-8"
+# Gemini 모델 (무료 티어 사용 가능)
+MODEL = "gemini-2.5-flash"
 
-# 웹서치 서버 도구 (Opus 4.8 지원 버전)
-WEB_SEARCH_TOOL_TYPE = "web_search_20260209"
+# 429/5xx 재시도 — v1이 quota(429)에서 그냥 죽던 것이 v2의 발단이었다.
+MAX_RETRIES = 5
+BASE_DELAY_SEC = 4  # 지수 백오프: 4, 8, 16, 32초
 
 # TikTok Creative Center Top Ads 필터 기본값
 TIKTOK_REGION = "KR"
