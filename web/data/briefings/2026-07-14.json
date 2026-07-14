@@ -1,0 +1,208 @@
+{
+  "date": "2026-07-14",
+  "generated_at": "2026-07-14T08:33:26.918649+00:00",
+  "brief": "## 📢 이번 주 TikTok 크리에이티브 인사이트 리포트\n\n이번 주 수집된 데이터(20개 광고)를 바탕으로 분석한 핵심 인사이트입니다.\n\n---\n\n### 1. 이번 주 주목할 트렌드\n*   **높은 CTR, 낮은 좋아요의 역설:** 일부 커머스/서비스 광고에서 좋아요 수는 매우 적으나 CTR은 70~90%대를 기록함. 즉, 브랜드 인지도보다는 즉각적인 클릭을 유도하는 '정보 전달 및 혜택 위주'의 소재가 성과가 좋음.\n*   **스토리텔링형 POV(Point of View)의 강세:** 여행, 라이프스타일, 교육 분야에서는 단순 홍보보다 1인칭 시점의 체험기나 인터뷰 형식을 사용하여 시청자의 몰입을 극대화하고 있음.\n*   **수치 기반의 직관적 소구:** 신규 서버 소환 횟수, 할인율(76%), 기간 한정, 1+1 혜택 등 숫자를 활용한 카피가 유저의 클릭을 이끌어내는 주요 동력으로 작용 중.\n\n### 2. 주목할 후킹/카피 패턴\n*   **직관적 혜택 강조형:** 소비자가 얻을 이득을 숫자로 명확히 제시\n    *   예: \"[76%할인] 1+1+1+1 39,900원\", \"총 2000회의 무료 소환 찬스\"\n*   **공감 및 문제 해결형:** 상황을 제시하고 해결책을 연결\n    *   예: \"혼자 감당하기 어려운 상황, 내 상황에 딱 맞는 법적 지원\"\n*   **트렌디한 화제성 연결:** 요즘 이슈나 타율 2위 선수 등 시의성 높은 소재 활용\n    *   예: \"요즘 난리난 금손의사\", \"어쩔 'MLB 타율 2위 이정후'\"\n\n### 3. 포맷 트렌드\n*   **Video 포맷 점유:** 분석된 모든 데이터가 'Video' 포맷임. 이제 틱톡 환경에서 정적인 이미지보다 생동감 있는 영상이 필수적.\n*   **숏폼 특화 인터뷰/리뷰:** 실제 사용자의 후기(Robot Vacuum 사례)나 인터뷰(Business School 사례) 등 출연진이 직접 경험하고 설명하는 영상이 높은 신뢰도와 높은 CTR을 동반함.\n\n### 4. 우리 소재 기획 적용 포인트\n*   **카피 내 '숫자' 명시화:** 모호한 혜택보다는 '몇 회', '몇 %, '얼마' 등 구체적인 숫자를 카피 전면에 배치하여 유저의 호기심과 클릭을 유도할 것.\n*   **'정보성' 중심의 크리에이티브 전환:** 단순히 광고 영상을 보여주는 것이 아니라, 특정 상황에서의 팁이나 후기(POV)를 담아 광고처럼 느껴지지 않는 '네이티브한 정보성 영상'을 제작하는 전략이 유효함.",
+  "warnings": [],
+  "ads": [
+    {
+      "advertiser": "토이 삼국",
+      "industry": "Games & Utility Software",
+      "likes": 142,
+      "ctr": 0.09,
+      "format": "video",
+      "caption": "신규 서버 총 2000회의 무료 소환 찬스에 원하는 무장까지!",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7646756224369541136/pc/en",
+      "thumbnail": "thumbs/2026-07-14/00.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Legal Services",
+      "likes": 1,
+      "ctr": 0.63,
+      "format": "video",
+      "caption": "혼자 감당하기 어려운 상황, 내 상황에 딱 맞는 법적 지원을 리본회생에서 확인해보세요.",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7627008707012968469/pc/en",
+      "thumbnail": "thumbs/2026-07-14/01.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Home Appliances",
+      "likes": 2776,
+      "ctr": 0.97,
+      "format": "video",
+      "caption": "The Narwal Freo Z10 is a game changer! With its powerful 25,000Pa suction, it keeps my floors spotless with minimal effort on my part. I love having a smart cleaning solution that saves me time and gives me one less thing to worry about. This is the kind of technology I can definitely get used to! 🧹🤖.  To order, use my code: WESTINFLOW2 for the prime day sale before it begins!   Link in bio . #Narwal #RobotVacuum",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7653049557525626897/pc/en",
+      "thumbnail": "thumbs/2026-07-14/02.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Cell Phones",
+      "likes": 14937,
+      "ctr": 0.36,
+      "format": "video",
+      "caption": "The all-new #Xiaomi17TSeries is here. One look won't be enough. Good thing the full reveal is right around the corner. 🗓️May 28th, 16:00 (GMT+4)",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7642667706169442325/pc/en",
+      "thumbnail": "thumbs/2026-07-14/03.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Men's Clothing",
+      "likes": 11,
+      "ctr": 0.78,
+      "format": "video",
+      "caption": "TN02- Quần Ống Rộng Dáng Thụng Kaki Gió Hàn Phối TÚi Hộp Hai Bên.",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7643717106421104661/pc/en",
+      "thumbnail": "thumbs/2026-07-14/04.jpg"
+    },
+    {
+      "advertiser": "Not Mention",
+      "industry": "Tech & Electronics",
+      "likes": 0,
+      "ctr": 0.8,
+      "format": "video",
+      "caption": "Order now with SMS MERCHANDISE and Get 10% Off on all products at checkout.  CODE SMS10.",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7649505400027283476/pc/en",
+      "thumbnail": "thumbs/2026-07-14/05.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Live Events",
+      "likes": 10839,
+      "ctr": 0.38,
+      "format": "video",
+      "caption": "【📸 POV: Follow us to experience the absolute best of the Cheung Chau Bun Festival in 24 hours! 🔥🚢】 When tourists experience a century-old National Intangible Cultural Heritage for the very first time, what kind of unexpected wonders and excitement await them in just 24 hours? 🤯🎒 Follow a French couple living in Hong Kong, as they immerse themselves from day to night in this grand traditional celebration through a first-person perspective! 👋 What touched their hearts the most? Was it the vivid Piu Sik Parade 🎭👶, the high-stakes thrills of the Bun Scrambling Final 🧗‍♂️💥, tasting a piping hot lucky Ping On bun 🍞🔴, sharing laughs with the local shopkeepers, or the beautiful, serene tranquillity that settled over Cheung Chau once the crowds cleared? 🏝️🌊 Watch the video now to follow in their footsteps, find the answers, and experience this extraordinary island charm for yourself! 📹👇 👇 Explore more traditional Hong Kong festivals now: 🔗 https://www.discoverhongkong.com/eng/events/festival-highlights.html #DiscoverHongKong",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7644038024414822420/pc/en",
+      "thumbnail": "thumbs/2026-07-14/06.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Men's Clothing",
+      "likes": 223,
+      "ctr": 0.36,
+      "format": "video",
+      "caption": "TN05/ÁO Thun Nam Cổ V Cộc Tay Phongg Cách Form Gọn, Tôn Dáng Stype Hàn.",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7647798767409578005/pc/en",
+      "thumbnail": "thumbs/2026-07-14/07.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Games & Utility Software",
+      "likes": 0,
+      "ctr": 0.52,
+      "format": "video",
+      "caption": "자세히 알아보기 : 이벤트 세부사항을 확인하세요!",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7650330950007128085/pc/en",
+      "thumbnail": "thumbs/2026-07-14/08.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Medical Services",
+      "likes": 53,
+      "ctr": 0.54,
+      "format": "video",
+      "caption": "요즘 난리난 금손의사",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7642962969378865160/pc/en",
+      "thumbnail": "thumbs/2026-07-14/09.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Women's Clothing",
+      "likes": 40,
+      "ctr": 0.97,
+      "format": "video",
+      "caption": "",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7647075894428434448/pc/en",
+      "thumbnail": "thumbs/2026-07-14/10.jpg"
+    },
+    {
+      "advertiser": "Not Mention",
+      "industry": "Men's Clothing",
+      "likes": 14,
+      "ctr": 0.48,
+      "format": "video",
+      "caption": "[S-3XL] 26,900원 재고 소진시 판매종료",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7649278206155030536/pc/en",
+      "thumbnail": "thumbs/2026-07-14/11.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Feminine Care",
+      "likes": 1,
+      "ctr": 0.7,
+      "format": "video",
+      "caption": "[1+1] 아비브 어성초 패드 올영세일 시작 전 미리 담아두세요!",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7644852069346344978/pc/en",
+      "thumbnail": "thumbs/2026-07-14/12.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Haircare",
+      "likes": 415,
+      "ctr": 0.84,
+      "format": "video",
+      "caption": "@レイア 贅沢な香り！混ぜてもその時の調子で単独でも使えるビオチンケラチンヘアマスク！ #ヘアケア #ヘアマスク #おすすめ #tiktokshop #capcut ",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7646745403967078418/pc/en",
+      "thumbnail": "thumbs/2026-07-14/13.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Sports & Fitness",
+      "likes": 357,
+      "ctr": 0.55,
+      "format": "video",
+      "caption": "WAR? wRC+? OPS? 타구질? . . . 어쩔 \"MLB 타율 2위 이정후\" #이정후 #4안타 #타율 #0.333 #2위 워싱턴 v 샌프란시스코 ⚾ 6/10 (수) 오전 10시 45분 👉 SPOTV NOW #MLB #메이저리그",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7649559828704919568/pc/en",
+      "thumbnail": "thumbs/2026-07-14/14.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Women's Clothing",
+      "likes": 4,
+      "ctr": 0.61,
+      "format": "video",
+      "caption": "Mở Bán- ÁO Thun 3 Sọc Ôm Body Chất Cotton Lạnh Bozip 4 Chiều.",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7652177608839839761/pc/en",
+      "thumbnail": "thumbs/2026-07-14/15.jpg"
+    },
+    {
+      "advertiser": "Not Mention",
+      "industry": "Men's Clothing",
+      "likes": 2,
+      "ctr": 0.6,
+      "format": "video",
+      "caption": "[76%할인] 1+1+1+1 39,900원 ",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7649333298423529490/pc/en",
+      "thumbnail": "thumbs/2026-07-14/16.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Business & Economy",
+      "likes": 2270,
+      "ctr": 0.96,
+      "format": "video",
+      "caption": "Comment allier IA, innovation et responsabilité ? Dans cette interview, le directeur du BSc in Data Science for Responsible Business et deux étudiantes racontent leur quotidien, leurs projets et leurs ambitions  @emlyonbschool #businessschool",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7649800886743973904/pc/en",
+      "thumbnail": "thumbs/2026-07-14/17.jpg"
+    },
+    {
+      "advertiser": "토이 삼국",
+      "industry": "Games & Utility Software",
+      "likes": 90,
+      "ctr": 0.12,
+      "format": "video",
+      "caption": "신규 서버 총 2000회의 무료 소환 찬스에 원하는 무장까지!",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7646756214772531216/pc/en",
+      "thumbnail": "thumbs/2026-07-14/18.jpg"
+    },
+    {
+      "advertiser": "",
+      "industry": "Medical Services",
+      "likes": 33,
+      "ctr": 0.45,
+      "format": "video",
+      "caption": "임플란트 역대급 혜택",
+      "link": "https://ads.tiktok.com/business/creativecenter/topads/7644754137792774152/pc/en",
+      "thumbnail": "thumbs/2026-07-14/19.jpg"
+    }
+  ]
+}
