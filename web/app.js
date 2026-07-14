@@ -39,11 +39,18 @@ function miniMarkdown(md) {
   return out.join("");
 }
 
-// 0~1 범위의 CTR을 막대 너비(%)로. 값이 없으면 막대를 그리지 않는다.
+function fmtDuration(sec) {
+  if (sec == null) return "–";
+  return `${Math.round(sec)}초`;
+}
+
+// 0~1 범위의 클릭률을 막대 너비(%)로. 값이 없으면 막대를 그리지 않는다.
 function ctrMeter(ctr) {
   if (ctr == null) return "";
   const pct = Math.max(0, Math.min(100, Number(ctr) * 100));
-  return `<div class="meter"><span style="width:${pct.toFixed(1)}%"></span></div>`;
+  return `<div class="meter" role="img" aria-label="클릭률 ${fmtPct(ctr)}">
+      <span style="width:${pct.toFixed(1)}%"></span>
+    </div>`;
 }
 
 // index는 TikTok Top Ads의 인기 순위 — 카드 순서 자체가 정보라 번호로 드러낸다.
@@ -51,23 +58,33 @@ function adCard(ad, i) {
   const thumb = ad.thumbnail
     ? `<img class="ad-thumb" src="data/${esc(ad.thumbnail)}" alt="" loading="lazy">`
     : `<div class="ad-thumb ad-thumb--empty">${ad.format === "video" ? "▶" : "🖼"}</div>`;
-  const industry = ad.industry
-    ? `<span class="ad-industry">${esc(ad.industry)}</span>`
-    : "";
+
+  const chips = [];
+  if (ad.industry) chips.push(`<span class="chip">${esc(ad.industry)}</span>`);
+  if (ad.objective) chips.push(`<span class="chip chip--obj">${esc(ad.objective)}</span>`);
+
+  const stats = [
+    { label: "좋아요", value: fmtNum(ad.likes) },
+    { label: "길이", value: fmtDuration(ad.duration) },
+  ]
+    .map((s) => `<div class="stat"><dt>${s.label}</dt><dd>${s.value}</dd></div>`)
+    .join("");
+
   return `
     <a class="ad-card" href="${esc(ad.link)}" target="_blank" rel="noopener">
       <span class="ad-rank">${i + 1}</span>
       ${thumb}
       <div class="ad-body">
-        <span class="ad-advertiser">${esc(ad.advertiser) || "(광고주 미상)"}</span>
-        ${industry}
+        <span class="ad-advertiser">${esc(ad.advertiser) || "광고주 미공개"}</span>
+        <div class="chips">${chips.join("")}</div>
         <p class="ad-caption">${esc(ad.caption)}</p>
         <div class="ad-metrics">
-          <div class="metric-row">
-            <span>♥ ${fmtNum(ad.likes)}</span>
-            <span class="metric-ctr">${fmtPct(ad.ctr)}</span>
+          <div class="ctr-row">
+            <span class="ctr-label">클릭률</span>
+            <span class="ctr-value">${fmtPct(ad.ctr)}</span>
           </div>
           ${ctrMeter(ad.ctr)}
+          <dl class="stats">${stats}</dl>
         </div>
       </div>
     </a>`;

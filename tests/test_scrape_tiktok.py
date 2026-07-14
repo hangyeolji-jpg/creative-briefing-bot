@@ -1,7 +1,30 @@
 import json
 from pathlib import Path
 
-from briefing.scrape_tiktok import build_industry_map, parse_top_ads
+from briefing.scrape_tiktok import build_industry_map, map_objective, parse_top_ads
+
+
+def test_parses_objective_and_duration():
+    payload = {"data": {"materials": [{
+        "id": "1", "brand_name": "B", "ad_title": "c", "like": 5, "ctr": 0.5,
+        "objective_key": "campaign_objective_lead_generation",
+        "video_info": {"cover": "https://c/1.jpg", "duration": 39.467},
+    }]}}
+    ad = parse_top_ads(payload, 10)[0]
+    assert ad.objective == "리드 확보"
+    assert ad.duration == 39.467
+
+
+def test_unknown_objective_keeps_original():
+    # 모르는 키를 조용히 버리지 않는다
+    assert map_objective("campaign_objective_new_thing") == "new thing"
+    assert map_objective("") is None
+
+
+def test_missing_objective_and_duration_are_none():
+    ad = parse_top_ads({"data": {"materials": [{"id": "1"}]}}, 10)[0]
+    assert ad.objective is None
+    assert ad.duration is None
 
 FIXTURES = Path(__file__).parent / "fixtures"
 FIXTURE = FIXTURES / "tiktok_top_ads.json"

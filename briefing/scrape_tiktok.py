@@ -13,8 +13,30 @@ _LIST_API = "top_ads/v2/list"       # 인기 광고 목록
 _FILTERS_API = "top_ads/v2/filters"  # industry_key -> 사람이 읽는 이름 매핑
 
 
+# objective_key -> 사람이 읽는 이름 (실측: campaign_objective_* 접두사)
+_OBJECTIVES = {
+    "campaign_objective_traffic": "트래픽",
+    "campaign_objective_conversion": "전환",
+    "campaign_objective_lead_generation": "리드 확보",
+    "campaign_objective_reach": "도달",
+    "campaign_objective_app_install": "앱 설치",
+    "campaign_objective_video_view": "동영상 조회",
+    "campaign_objective_engagement": "참여",
+    "campaign_objective_product_sales": "판매",
+}
+
+
 def _detail_link(ad_id: str) -> str:
     return f"{_DETAIL_BASE}{ad_id}/pc/en" if ad_id else TIKTOK_TOP_ADS_URL
+
+
+def map_objective(key: str) -> str | None:
+    """모르는 키는 접두사만 떼어 원문을 남긴다 — 조용히 버리지 않는다."""
+    if not key:
+        return None
+    if key in _OBJECTIVES:
+        return _OBJECTIVES[key]
+    return key.replace("campaign_objective_", "").replace("_", " ") or None
 
 
 def build_industry_map(filters_payload: dict) -> dict:
@@ -46,6 +68,8 @@ def parse_top_ads(payload: dict, top_n: int, industry_map: dict | None = None) -
         ad_id = str(m.get("id", ""))
         industry_key = m.get("industry_key") or ""
         video_info = m.get("video_info") or {}
+        if not isinstance(video_info, dict):
+            video_info = {}
         ads.append(
             Ad(
                 advertiser=m.get("brand_name") or "",
@@ -55,7 +79,9 @@ def parse_top_ads(payload: dict, top_n: int, industry_map: dict | None = None) -
                 format="video" if video_info else "image",
                 caption=m.get("ad_title") or "",
                 link=_detail_link(ad_id),
-                thumbnail=(video_info.get("cover") if isinstance(video_info, dict) else None),
+                thumbnail=video_info.get("cover"),
+                objective=map_objective(m.get("objective_key") or ""),
+                duration=video_info.get("duration"),
             )
         )
     return ads

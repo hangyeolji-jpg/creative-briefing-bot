@@ -26,9 +26,12 @@ def _format_ads(ads: list[Ad]) -> str:
     for i, ad in enumerate(ads, 1):
         likes = "-" if ad.likes is None else f"{ad.likes:,}"
         ctr = "-" if ad.ctr is None else f"{ad.ctr:.2%}"
+        dur = "-" if not ad.duration else f"{ad.duration:.0f}초"
+        obj = ad.objective or "-"
         rows.append(
-            f"{i}. 광고주={ad.advertiser} / 업종={ad.industry} / 좋아요={likes} "
-            f"/ CTR={ctr} / 포맷={ad.format} / 카피={ad.caption} / 링크={ad.link}"
+            f"{i}. 광고주={ad.advertiser or '미상'} / 업종={ad.industry} / 좋아요={likes} "
+            f"/ CTR={ctr} / 포맷={ad.format} / 길이={dur} / 캠페인목표={obj} "
+            f"/ 카피={ad.caption} / 링크={ad.link}"
         )
     return "\n".join(rows)
 
@@ -58,12 +61,29 @@ def summarize_metrics(ads: list[Ad]) -> str:
             f"/ 최고 {max(likes):,}"
         )
 
+    durations = [a.duration for a in ads if a.duration]
+    if durations:
+        lines.append(
+            f"- 영상 길이(초): 최단 {min(durations):.0f} / 중앙값 "
+            f"{statistics.median(durations):.0f} / 최장 {max(durations):.0f}"
+        )
+
     formats: dict[str, int] = {}
     for a in ads:
         formats[a.format] = formats.get(a.format, 0) + 1
     lines.append(
         "- 포맷 구성: " + ", ".join(f"{k} {v}건" for k, v in sorted(formats.items()))
     )
+
+    objectives: dict[str, int] = {}
+    for a in ads:
+        if a.objective:
+            objectives[a.objective] = objectives.get(a.objective, 0) + 1
+    if objectives:
+        ranked = sorted(objectives.items(), key=lambda kv: -kv[1])
+        lines.append(
+            "- 캠페인 목표 구성: " + ", ".join(f"{k} {v}건" for k, v in ranked)
+        )
 
     return "\n".join(lines)
 
