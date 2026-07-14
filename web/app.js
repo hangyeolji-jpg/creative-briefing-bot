@@ -9,6 +9,8 @@ async function loadJSON(path) {
 
 function fmtPct(v) { return v == null ? "–" : `${Math.round(v * 100)}%`; }
 function fmtNum(v) { return v == null ? "–" : v.toLocaleString(); }
+function fmtDuration(sec) { return sec == null ? "–" : `${Math.round(sec)}초`; }
+
 // 따옴표까지 escape — 결과값이 href="..." 같은 속성 컨텍스트에 들어가므로
 // " 를 남겨두면 속성을 탈출해 이벤트 핸들러를 주입할 수 있다.
 function esc(s) {
@@ -17,32 +19,159 @@ function esc(s) {
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-// 아주 간단한 마크다운 → HTML (제목/굵게/문단만). 입력은 먼저 이스케이프.
-// 제목은 줄 단위로 판정한다 — 블록 첫 줄만 보면 빈 줄 없이 이어진 제목이
-// <p> 안에 중첩돼 잘못된 HTML이 된다.
-function miniMarkdown(md) {
-  const lines = esc(md)
+/* ---------------- 마크다운 ----------------
+   브리핑은 제목·불릿(2단)·굵게·기울임으로 온다. 불릿을 리스트로 렌더링하지
+   않으면 전부 <br>로 이어붙은 한 덩어리 글이 되어 읽을 수가 없다. */
+
+function mdInline(s) {
+  // **굵게**를 먼저 소비해야 남은 *기울임*이 안전하게 잡힌다.
+  return esc(s)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .split("\n");
+    .replace(/\*(.+?)\*/g, "<em>$1</em>");
+}
+
+function listHtml(items) {
+  let html = '<ul class="md-list">';
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].depth > 0) continue; // 자식은 부모가 함께 그린다
+    const kids = [];
+    let j = i + 1;
+    while (j < items.length && items[j].depth > 0) { kids.push(items[j]); j++; }
+    html += `<li>${mdInline(items[i].text)}`;
+    if (kids.length) {
+      html += '<ul class="md-sub">' +
+        kids.map((k) => `<li>${mdInline(k.text)}</li>`).join("") + "</ul>";
+    }
+    html += "</li>";
+    i = j - 1;
+  }
+  return html + "</ul>";
+}
+
+// 제목을 뺀 본문 줄들 → HTML (문단 / 불릿 리스트 / 구분선)
+function renderBody(lines) {
   const out = [];
   let para = [];
-  const flush = () => {
-    if (para.length) { out.push(`<p>${para.join("<br>")}</p>`); para = []; }
+  let items = [];
+
+  const flushPara = () => {
+    if (!para.length) return;
+    out.push(`<p>${para.map(mdInline).join("<br>")}</p>`);
+    para = [];
   };
-  for (const line of lines) {
-    const heading = line.match(/^#{1,6}\s?(.*)$/);
-    if (heading) { flush(); out.push(`<h3>${heading[1]}</h3>`); }
-    else if (!line.trim()) flush();
-    else para.push(line);
+  const flushList = () => {
+    if (!items.length) return;
+    out.push(listHtml(items));
+    items = [];
+  };
+
+  for (const raw of lines) {
+    const bullet = raw.match(/^(\s*)[*\-+]\s+(.*)$/);
+    if (bullet) {
+      flushPara();
+      items.push({ depth: bullet[1].length >= 2 ? 1 : 0, text: bullet[2] });
+      continue;
+    }
+    if (/^\s*-{3,}\s*$/.test(raw)) { flushPara(); flushList(); continue; }
+    if (!raw.trim()) { flushPara(); flushList(); continue; }
+    flushList();
+    para.push(raw.trim());
   }
-  flush();
+  flushPara();
+  flushList();
   return out.join("");
 }
 
-function fmtDuration(sec) {
-  if (sec == null) return "–";
-  return `${Math.round(sec)}초`;
+// 브리핑을 "### 1. 제목" 기준으로 쪼갠다. 프롬프트가 4개 섹션을 고정하므로
+// 그 구조를 화면에서도 살린다.
+function splitSections(md) {
+  const sections = [];
+  let cur = { num: null, title: null, lines: [] };
+  for (const raw of String(md || "").split("\n")) {
+    const h = raw.match(/^#{1,6}\s+(?:(\d+)[.)]\s*)?(.*)$/);
+    if (h) {
+      sections.push(cur);
+      cur = { num: h[1] || null, title: h[2].trim(), lines: [] };
+    } else {
+      cur.lines.push(raw);
+    }
+  }
+  sections.push(cur);
+  return sections.filter((s) => s.title || s.lines.join("").trim());
 }
+
+function renderBrief(md) {
+  const sections = splitSections(md);
+  return sections
+    .map((s) => {
+      const body = renderBody(s.lines);
+      if (!s.title) {
+        // 제목 앞의 도입부 / 말미 각주
+        return body ? `<div class="brief-intro">${body}</div>` : "";
+      }
+      const num = s.num
+        ? `<span class="sec-num">${esc(s.num)}</span>`
+        : "";
+      return `
+        <section class="brief-section">
+          <h3 class="sec-title">${num}${esc(s.title)}</h3>
+          <div class="sec-body">${body}</div>
+        </section>`;
+    })
+    .join("");
+}
+
+/* ---------------- 요약 지표 ---------------- */
+
+function median(nums) {
+  if (!nums.length) return null;
+  const s = [...nums].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function summaryTiles(ads) {
+  if (!ads.length) return "";
+  const ctrs = ads.map((a) => a.ctr).filter((v) => v != null);
+  const durs = ads.map((a) => a.duration).filter((v) => v != null);
+
+  const objCount = {};
+  ads.forEach((a) => { if (a.objective) objCount[a.objective] = (objCount[a.objective] || 0) + 1; });
+  const topObj = Object.entries(objCount).sort((a, b) => b[1] - a[1])[0];
+
+  const tiles = [
+    {
+      label: "수집 광고",
+      value: `${ads.length}건`,
+      sub: "TikTok 인기순",
+    },
+    ctrs.length && {
+      label: "클릭률",
+      value: `${fmtPct(Math.min(...ctrs))} – ${fmtPct(Math.max(...ctrs))}`,
+      sub: `중앙값 ${fmtPct(median(ctrs))}`,
+    },
+    durs.length && {
+      label: "영상 길이",
+      value: `${fmtDuration(Math.min(...durs))} – ${fmtDuration(Math.max(...durs))}`,
+      sub: `중앙값 ${fmtDuration(median(durs))}`,
+    },
+    topObj && {
+      label: "주요 캠페인 목표",
+      value: esc(topObj[0]),
+      sub: `${topObj[1]}건 / 전체 ${ads.length}건`,
+    },
+  ].filter(Boolean);
+
+  return `<dl class="summary">${tiles
+    .map((t) => `
+      <div class="tile">
+        <dt>${t.label}</dt>
+        <dd>${t.value}<span class="tile-sub">${t.sub}</span></dd>
+      </div>`)
+    .join("")}</dl>`;
+}
+
+/* ---------------- 광고 카드 ---------------- */
 
 // 0~1 범위의 클릭률을 막대 너비(%)로. 값이 없으면 막대를 그리지 않는다.
 function ctrMeter(ctr) {
@@ -90,6 +219,8 @@ function adCard(ad, i) {
     </a>`;
 }
 
+/* ---------------- 화면 ---------------- */
+
 async function showBriefing(date) {
   detailEl.innerHTML = `<p class="muted">불러오는 중…</p>`;
   listEl.querySelectorAll("a").forEach((a) =>
@@ -97,23 +228,26 @@ async function showBriefing(date) {
   try {
     const b = await loadJSON(`data/briefings/${date}.json`);
     const ads = b.ads || [];
-    const cards = ads.map(adCard).join("");
     const warn = (b.warnings || []).length
       ? `<div class="warnings">${b.warnings.map((w) => `⚠️ ${esc(w)}`).join("<br>")}</div>`
       : "";
     const adsSection = ads.length
-      ? `<h3 class="ads-heading">인기 광고 <span class="detail-meta">${ads.length}건</span></h3>
-         <p class="ads-note">TikTok Creative Center 인기순. 카드를 누르면 원본으로 이동합니다.</p>
-         <div class="ad-grid">${cards}</div>`
-      : `<h3 class="ads-heading">인기 광고</h3>
-         <p class="ads-note">이번 주에는 수집된 광고가 없습니다.</p>`;
+      ? `<div class="ads-head">
+           <h3 class="ads-heading">인기 광고</h3>
+           <span class="ads-note">인기순 ${ads.length}건 · 카드를 누르면 원본으로 이동합니다</span>
+         </div>
+         <div class="ad-grid">${ads.map(adCard).join("")}</div>`
+      : `<div class="ads-head"><h3 class="ads-heading">인기 광고</h3></div>
+         <p class="muted">이번 주에는 수집된 광고가 없습니다.</p>`;
+
     detailEl.innerHTML = `
       <div class="detail-head">
         <h2 class="detail-date">${esc(b.date)}</h2>
-        <span class="detail-meta">광고 ${ads.length}건</span>
+        <span class="detail-meta">주간 크리에이티브 인사이트</span>
       </div>
       ${warn}
-      <div class="brief-text">${miniMarkdown(b.brief)}</div>
+      ${summaryTiles(ads)}
+      <div class="brief">${renderBrief(b.brief)}</div>
       ${adsSection}`;
   } catch (e) {
     detailEl.innerHTML = `<p class="muted">이 브리핑을 불러오지 못했습니다 (${esc(e.message)}).</p>`;
